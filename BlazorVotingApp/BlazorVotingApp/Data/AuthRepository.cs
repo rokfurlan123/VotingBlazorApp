@@ -1,10 +1,14 @@
 ﻿using BlazorVotingApp.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace BlazorVotingApp.Data
@@ -36,7 +40,7 @@ namespace BlazorVotingApp.Data
             }
             else
             {
-                //response.Data = CreateToken(user);
+                response.Data = CreateToken(user);
             }
             return response;
         }
@@ -101,7 +105,36 @@ namespace BlazorVotingApp.Data
             }
         }
 
+        private string CreateToken(User user)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Name, user.Email),
+                new Claim("IsUserAdmin", IsUserAdmin(user))
+            };
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration.GetSection("AppSettings:IdentityToken").Value));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
+            var tokens = new JwtSecurityToken(
+                claims: claims,
+                expires: DateTime.Now.AddHours(3),
+                signingCredentials: creds
+                );
 
+            var jwt = new JwtSecurityTokenHandler().WriteToken(tokens);
+            return jwt;
+        }
+
+        private string IsUserAdmin(User user)
+        {
+            if (user.IsAdmin == true)
+            {
+                return "true";
+            }
+            else
+                return "false";
+            
+        }
     }
 }

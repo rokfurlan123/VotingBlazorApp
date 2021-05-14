@@ -10,7 +10,7 @@ namespace BlazorVotingApp.Models
     {
         [Required(ErrorMessage = "Please enter an email address")]
         public string Email { get; set; }
-        [Required]
+        [Required]  
         public string Password { get; set; }
     }
 }
